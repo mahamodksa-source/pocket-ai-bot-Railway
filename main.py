@@ -56,6 +56,11 @@ def weekly_report_if_needed(last_report_time):
 
 
 
+# عدد الدقائق بين كل صفقة وصفقة
+TRADE_INTERVAL_MINUTES = 30  
+
+# نحوله إلى ثواني ونستخدمه في sleep
+TRADE_INTERVAL_SECONDS = TRADE_INTERVAL_MINUTES * 60
 
 
 def main_loop():
@@ -85,7 +90,7 @@ def main_loop():
         except Exception as e:
             notifier.send_text(f"❌ خطأ: {str(e)}")
 
-        time.sleep(TRADE_INTERVAL_MINUTES)
+        time.sleep(TRADE_INTERVAL_SECONDS)
 
 
 # تشغيل البوت
