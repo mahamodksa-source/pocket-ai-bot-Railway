@@ -1,11 +1,21 @@
+import os
 import requests
 
-class TelegramNotifier:
-    def __init__(self, token, chat_id):
-        self.token = token
-        self.chat_id = chat_id
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
+class Notifier:
     def send_text(self, message):
-        url = f"https://api.telegram.org/bot{self.token}/sendMessage"
-        payload = {"chat_id": self.chat_id, "text": message}
-        requests.post(url, data=payload)
+        if not TOKEN or not CHAT_ID:
+            print("⚠️ Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID")
+            return
+
+        url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+        payload = {"chat_id": CHAT_ID, "text": message}
+
+        try:
+            response = requests.post(url, data=payload)
+            if response.status_code != 200:
+                print(f"❌ Telegram error: {response.text}")
+        except Exception as e:
+            print(f"❌ Error sending telegram message: {e}")
