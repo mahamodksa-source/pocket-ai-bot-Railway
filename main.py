@@ -7,6 +7,13 @@ from pocket_api import PocketClient
 from telegram_bot import TelegramNotifier
 from logger import append_trade
 
+from notifier import TelegramNotifier
+import os
+
+notifier = TelegramNotifier(
+    token=os.environ.get("TELEGRAM_BOT_TOKEN"),
+    chat_id=os.environ.get("TELEGRAM_CHAT_ID")
+)
 
 # إعداد المتغيرات من البيئة
 TELEGRAM_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
