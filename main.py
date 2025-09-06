@@ -1,7 +1,7 @@
 import os
 import time
 import random
-from pocketoptionapi.stable_api import PocketOption
+from pocket import PocketClient
 from notifier import Notifier
 
 # ====== إعدادات من المتغيرات ======
@@ -15,19 +15,17 @@ PASSWORD = os.getenv("POCKET_PASSWORD")
 notifier = Notifier()
 
 # ====== تسجيل الدخول إلى Pocket Option ======
-pocket = PocketOption(EMAIL, PASSWORD)
+pocket = PocketClient(EMAIL, PASSWORD, use_demo=USE_DEMO)
 if not pocket.connect():
     notifier.send_text("❌ فشل تسجيل الدخول إلى Pocket Option")
     exit(1)
 
 balance = pocket.get_balance()
-notifier.send_text(f"✅ البوت اشتغل الآن!\n💰 الرصيد الحالي: {balance}")
+notifier.send_text(f"✅ البوت اشتغل الآن!\n💰 الرصيد الحالي: {balance}$")
 
 
 def get_signal():
-    """
-    إشارة وهمية (لاحقًا تتغير إلى ذكاء اصطناعي)
-    """
+    """ إشارة وهمية (لاحقًا تتغير إلى ذكاء اصطناعي) """
     return random.choice(["call", "put", None])
 
 
@@ -36,28 +34,24 @@ def main_loop():
         try:
             signal = get_signal()
             if signal:
-                # فتح صفقة
-                status, order_id = pocket.buy(
-                    amount=TRADE_AMOUNT,
+                trade = pocket.place_trade(
                     asset="EURUSD",
                     direction=signal,
-                    duration=1  # دقيقة واحدة
+                    amount=TRADE_AMOUNT,
+                    duration=1
                 )
-
-                # إشعار مبدئي
                 notifier.send_text(
-                    f"🚀 صفقة جديدة: {signal}\n"
-                    f"💵 المبلغ: {TRADE_AMOUNT}\n"
-                    f"📊 الحالة: {status}\n"
-                    f"🆔 رقم العملية: {order_id}"
+                    f"🚀 صفقة جديدة: {trade['direction']}\n"
+                    f"💵 المبلغ: {trade['amount']}\n"
+                    f"⏳ المدة: {trade['duration']} دقيقة\n"
+                    f"📊 النتيجة: {trade['status']}"
                 )
 
-            # الانتظار للفترة المحددة
             time.sleep(TRADE_INTERVAL_MINUTES * 60)
 
         except Exception as e:
             notifier.send_text(f"❌ خطأ: {str(e)}")
-            time.sleep(10)  # إعادة المحاولة بعد 10 ثواني
+            time.sleep(10)
 
 
 if __name__ == "__main__":
