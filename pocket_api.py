@@ -1,22 +1,37 @@
-# موصل تجريبي لـ Pocket Option
-# *** هذا ملف نموذجي — تحتاج تعديله ليتوافق مع طريقة الربط التي تملكها.
-# ممكن أن يكون عبر WebSocket أو requests أو selenium حسب الوسيلة المتاحة.
 
 
 class PocketClient:
-def __init__(self, token=None, use_demo=True):
-self.token = token
+def __init__(self, email=None, password=None, use_demo=True):
+self.email = email
+self.password = password
 self.use_demo = use_demo
-# TODO: إعداد الجلسة، المصادقة، WebSocket، الخ.
+self.session = requests.Session()
+self.base_url = "https://pocketoption.com/api"
+self.authenticated = False
+self.login()
+
+
+def login(self):
+if not self.email or not self.password:
+raise ValueError("يجب تحديد POCKET_EMAIL و POCKET_PASSWORD")
+try:
+resp = self.session.post(f"{self.base_url}/login/", data={
+"email": self.email,
+"password": self.password
+})
+if resp.status_code == 200 and "success" in resp.text:
+self.authenticated = True
+print("تم تسجيل الدخول بنجاح")
+else:
+print("فشل تسجيل الدخول:", resp.text)
+except Exception as e:
+print("خطأ أثناء تسجيل الدخول:", e)
 
 
 def place_trade(self, direction='call', amount=2.0):
-"""تنفيذ صفقة.
-يجب أن تعيد dict مع حقل `status` = 'win'|'loss'|'pending'.
-في هذا النموذج نُعيد نتيجة وهمية.
-"""
-# TODO: نفذ الطلب الحقيقي هنا.
-# مثال تجريبي: نرجع win بنسبة 55%.
+if not self.authenticated:
+return {'status': 'error', 'details': 'not logged in'}
+# ⚠️ ملاحظة: هذه مجرد محاكاة. تحتاج تعرف Endpoint الحقيقي لتنفيذ صفقة.
 import random
 r = random.random()
 if r < 0.55:
