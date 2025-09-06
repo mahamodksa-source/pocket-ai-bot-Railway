@@ -3,5 +3,5 @@ numpy
 python-telegram-bot==20.5
 requests
 websocket-client
-pocketoption-api==1.0.4
+git+https://github.com/Lu-Yi-Hsun/pocketoption-api.git
 
