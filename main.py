@@ -27,22 +27,22 @@ CSV_FILE = 'trades.csv'
 
 # دالة التقرير الأسبوعي بسيطة: ترسل كل يوم سبت تقرير
 def weekly_report_if_needed(last_report_time):
-now = datetime.utcnow()
-# نرسل تقرير مرة في كل سبت (UTC) عند أول تشغيل بعد بداية اليوم
-if now.weekday() == 5: # Saturday
-if last_report_time is None or (now - last_report_time) > timedelta(days=6):
-# توليد التقرير
-try:
-df = pd.read_csv(CSV_FILE)
-total = len(df)
-wins = len(df[df.status == 'win'])
-losses = len(df[df.status == 'loss'])
-msg = f"📅 تقرير أسبوعي\nالإجمالي: {total}\nالرابحة: {wins}\nالخاسرة: {losses}"
-except FileNotFoundError:
-msg = "📅 تقرير أسبوعي\nلا توجد صفقات مسجلة بعد."
-notifier.send_text(msg)
-return now
-return last_report_time
+    now = datetime.utcnow()
+    # نرسل تقرير مرة في كل سبت (UTC) عند أول تشغيل بعد بداية اليوم
+    if now.weekday() == 5:  # Saturday
+        if last_report_time is None or (now - last_report_time) > timedelta(days=6):
+            try:
+                df = pd.read_csv(CSV_FILE)
+                total = len(df)
+                wins = len(df[df.status == 'win'])
+                losses = len(df[df.status == 'loss'])
+                msg = f"📅 تقرير أسبوعي\\nالإجمالي: {total}\\nالرابحة: {wins}\\nالخاسرة: {losses}"
+            except FileNotFoundError:
+                msg = "📅 تقرير أسبوعي\\nلا توجد صفقات مسجلة بعد."
+            notifier.send_text(msg)
+            return now
+    return last_report_time
+
 
 
 
