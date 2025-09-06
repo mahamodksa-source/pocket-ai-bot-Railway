@@ -85,7 +85,7 @@ def main_loop():
         except Exception as e:
             notifier.send_text(f"❌ خطأ: {str(e)}")
 
-        time.sleep(TRADE_INTERVAL_minutes)
+        time.sleep(TRADE_INTERVAL_MINUTES)
 
 
 # تشغيل البوت
