@@ -1,47 +1,38 @@
+import os
 import time
-from datetime import datetime, timezone
-from pocket_option_api import PocketOption
+from datetime import datetime
 from notifier import Notifier
-from utils import append_trade, get_signal
 
 # إعدادات
-AMOUNT = 2  # قيمة الصفقة
-CSV_FILE = "trades.csv"
-TRADE_INTERVAL_MINUTES = 30  # كل 30 دقيقة
+TRADE_INTERVAL_MINUTES = int(os.getenv("TRADE_INTERVAL_minutes", "30"))
+TRADE_AMOUNT = float(os.getenv("TRADE_AMOUNT", "2"))
+USE_DEMO = os.getenv("USE_DEMO", "true").lower() == "true"
 
-# تهيئة البوت
-pocket = PocketOption()
+# أنشئ notifier
 notifier = Notifier()
 
+def get_signal():
+    # دالة وهمية (تعدل لاحقًا بالذكاء الاصطناعي)
+    import random
+    return random.choice(["call", "put", None])
+
 def main_loop():
-    last_report_time = None
     while True:
         try:
-            # الحصول على إشارة
-            signal = get_signal()  # 'call' أو 'put' أو None
+            signal = get_signal()
             if signal:
-                # تنفيذ الصفقة
-                resp = pocket.place_trade(direction=signal, amount=AMOUNT)
-                status = resp.get('status', 'pending')
-
-                # حفظ الصفقة في CSV
-                append_trade(CSV_FILE, {
-                    'time': datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
-                    'signal': signal,
-                    'status': status,
-                    'amount': AMOUNT
-                })
-
-                # إرسال إشعار
-                notifier.send_text(f"📊 صفقة جديدة: {signal} | النتيجة: {status}")
-
-            # الانتظار 30 دقيقة
+                status = "pending"
+                # ترسل إشعار بتنفيذ الصفقة
+                notifier.send_text(f"🚀 إشارة جديدة: {signal} | المبلغ: {TRADE_AMOUNT} | الحالة: {status}")
+            
+            # تنتظر الفترة المحددة
             time.sleep(TRADE_INTERVAL_MINUTES * 60)
 
         except Exception as e:
-            notifier.send_text(f"❌ خطأ: {e}")
-            time.sleep(60)  # لو صار خطأ، انتظر دقيقة وجرب تاني
+            notifier.send_text(f"❌ خطأ: {str(e)}")
+            time.sleep(10)  # إعادة المحاولة بعد 10 ثواني
 
 if __name__ == "__main__":
-    notifier.send_text("✅ البوت اشتغل بنجاح")
+    # رسالة اختبار عند التشغيل
+    notifier.send_text("✅ البوت اشتغل الآن!")
     main_loop()
