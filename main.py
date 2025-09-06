@@ -36,12 +36,13 @@ def weekly_report_if_needed(last_report_time):
                 total = len(df)
                 wins = len(df[df.status == 'win'])
                 losses = len(df[df.status == 'loss'])
-                msg = f"📅 تقرير أسبوعي\\nالإجمالي: {total}\\nالرابحة: {wins}\\nالخاسرة: {losses}"
+                msg = f"📅 تقرير أسبوعي\nالإجمالي: {total}\nالرابحة: {wins}\nالخاسرة: {losses}"
             except FileNotFoundError:
-                msg = "📅 تقرير أسبوعي\\nلا توجد صفقات مسجلة بعد."
+                msg = "📅 تقرير أسبوعي\nلا توجد صفقات مسجلة بعد."
             notifier.send_text(msg)
             return now
     return last_report_time
+
 
 
 
