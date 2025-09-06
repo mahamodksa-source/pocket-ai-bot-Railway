@@ -49,16 +49,34 @@ def weekly_report_if_needed(last_report_time):
 
 
 def main_loop():
-print('بوت التداول شغال...')
-last_report_time = None
-while True:
-try:
-signal = get_signal() # 'call' او 'put' او None
-if signal:
-# تنفيذ صفقة بقيمة ثابتة
-resp = pocket.place_trade(direction=signal, amount=AMOUNT)
-# resp متوقع أن يحتوي على {'status': 'win'|'loss'|'pending', 'details': ...}
-status = resp.get('status', 'pending')
-# حفظ
-append_trade(CSV_FILE, {
+    print("🚀 بوت التداول شغال...")
+
+    last_report_time = None
+    while True:
+        try:
+            signal = get_signal()  # 'call' أو 'put' أو None
+            if signal:
+                # تنفيذ صفقة بناءً على الإشارة
+                resp = pocket.place_trade(direction=signal, amount=AMOUNT)
+                # resp = {'status': 'win'|'loss'|'pending', 'details': ...}
+                status = resp.get('status', 'pending')
+                # حفظ الصفقة
+                append_trade(CSV_FILE, {
+                    'time': datetime.utcnow().isoformat(),
+                    'signal': signal,
+                    'status': status,
+                    'amount': AMOUNT
+                })
+                notifier.send_text(f"📊 صفقة {signal} | النتيجة: {status}")
+
+            # تقرير أسبوعي
+            last_report_time = weekly_report_if_needed(last_report_time)
+
+        except Exception as e:
+            notifier.send_text(f"❌ خطأ: {str(e)}")
+
+        time.sleep(TRADE_INTERVAL_SECONDS)
+
+
+# تشغيل البوت
 main_loop()
