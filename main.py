@@ -1,97 +1,47 @@
-import os
 import time
-import pandas as pd
-from datetime import datetime, timedelta
-from strategy import get_signal
-from pocket_api import PocketClient
-from telegram_bot import TelegramNotifier
-from logger import append_trade
+from datetime import datetime, timezone
+from pocket_option_api import PocketOption
+from notifier import Notifier
+from utils import append_trade, get_signal
 
-from notifier import TelegramNotifier
-import os
+# إعدادات
+AMOUNT = 2  # قيمة الصفقة
+CSV_FILE = "trades.csv"
+TRADE_INTERVAL_MINUTES = 30  # كل 30 دقيقة
 
-notifier = TelegramNotifier(
-    token=os.environ.get("TELEGRAM_BOT_TOKEN"),
-    chat_id=os.environ.get("TELEGRAM_CHAT_ID")
-)
-
-# إعداد المتغيرات من البيئة
-TELEGRAM_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
-TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID')
-AMOUNT = float(os.environ.get('TRADE_AMOUNT', '2'))
-INTERVAL = int(os.environ.get('TRADE_INTERVAL_SECONDS', '60'))
-USE_DEMO = os.environ.get('USE_DEMO', 'true').lower() == 'true'
-
-
-# تهيئة العملاء
-pocket = PocketClient(
-    email=os.environ.get("POCKET_EMAIL"),
-    password=os.environ.get("POCKET_PASSWORD"),
-    use_demo=USE_DEMO
-)
-
-
-# ملف حفظ الصفقات
-CSV_FILE = 'trades.csv'
-
-
-# دالة التقرير الأسبوعي بسيطة: ترسل كل يوم سبت تقرير
-def weekly_report_if_needed(last_report_time):
-    now = datetime.utcnow()
-    # نرسل تقرير مرة في كل سبت (UTC) عند أول تشغيل بعد بداية اليوم
-    if now.weekday() == 5:  # Saturday
-        if last_report_time is None or (now - last_report_time) > timedelta(days=6):
-            try:
-                df = pd.read_csv(CSV_FILE)
-                total = len(df)
-                wins = len(df[df.status == 'win'])
-                losses = len(df[df.status == 'loss'])
-                msg = f"📅 تقرير أسبوعي\nالإجمالي: {total}\nالرابحة: {wins}\nالخاسرة: {losses}"
-            except FileNotFoundError:
-                msg = "📅 تقرير أسبوعي\nلا توجد صفقات مسجلة بعد."
-            notifier.send_text(msg)
-            return now
-    return last_report_time
-
-
-
-
-# عدد الدقائق بين كل صفقة وصفقة
-TRADE_INTERVAL_MINUTES = 30  
-
-# نحوله إلى ثواني ونستخدمه في sleep
-TRADE_INTERVAL_SECONDS = TRADE_INTERVAL_MINUTES * 60
-
+# تهيئة البوت
+pocket = PocketOption()
+notifier = Notifier()
 
 def main_loop():
-    print("🚀 بوت التداول شغال...")
-
     last_report_time = None
     while True:
         try:
+            # الحصول على إشارة
             signal = get_signal()  # 'call' أو 'put' أو None
             if signal:
-                # تنفيذ صفقة بناءً على الإشارة
+                # تنفيذ الصفقة
                 resp = pocket.place_trade(direction=signal, amount=AMOUNT)
-                # resp = {'status': 'win'|'loss'|'pending', 'details': ...}
                 status = resp.get('status', 'pending')
-                # حفظ الصفقة
+
+                # حفظ الصفقة في CSV
                 append_trade(CSV_FILE, {
-                    'time': datetime.utcnow().isoformat(),
+                    'time': datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
                     'signal': signal,
                     'status': status,
                     'amount': AMOUNT
                 })
-                notifier.send_text(f"📊 صفقة {signal} | النتيجة: {status}")
 
-            # تقرير أسبوعي
-            last_report_time = weekly_report_if_needed(last_report_time)
+                # إرسال إشعار
+                notifier.send_text(f"📊 صفقة جديدة: {signal} | النتيجة: {status}")
+
+            # الانتظار 30 دقيقة
+            time.sleep(TRADE_INTERVAL_MINUTES * 60)
 
         except Exception as e:
-            notifier.send_text(f"❌ خطأ: {str(e)}")
+            notifier.send_text(f"❌ خطأ: {e}")
+            time.sleep(60)  # لو صار خطأ، انتظر دقيقة وجرب تاني
 
-        time.sleep(TRADE_INTERVAL_SECONDS)
-
-
-# تشغيل البوت
-main_loop()
+if __name__ == "__main__":
+    notifier.send_text("✅ البوت اشتغل بنجاح")
+    main_loop()
