@@ -17,8 +17,11 @@ USE_DEMO = os.environ.get('USE_DEMO', 'true').lower() == 'true'
 
 
 # تهيئة العملاء
-pocket = PocketClient(token=os.environ.get('POCKET_TOKEN'), use_demo=USE_DEMO)
-notifier = TelegramNotifier(token=TELEGRAM_TOKEN, chat_id=TELEGRAM_CHAT_ID)
+pocket = PocketClient(
+    email=os.environ.get("POCKET_EMAIL"),
+    password=os.environ.get("POCKET_PASSWORD"),
+    use_demo=USE_DEMO
+)
 
 
 # ملف حفظ الصفقات
